@@ -1,0 +1,171 @@
+---
+title: "From Solana to CKB"
+description: "The Week 1 mental model shift: from mutating accounts to validating state replacement through cells and scripts."
+icon: "shuffle"
+---
+
+# From Solana to CKB: The Mental Model Shift You Need in Week 1
+
+Most people learning CKB are not learning blockchain from scratch. They are migrating from another chain, and that usually makes the first week harder, not easier.
+
+If Solana was your first serious mental model, you already carry a set of defaults about how blockchain systems work. You expect state to live in accounts, programs to load and mutate that state, and transactions to feel like requests for execution against a shared runtime. CKB does not break all of those instincts, but it rearranges them enough that familiar patterns can become misleading.
+
+That is the real purpose of Week 1. It is not to memorize new vocabulary. It is to replace one mental model with a better one.
+
+The core thesis for this note is simple:
+
+`CKB makes more sense when you stop thinking about mutating accounts and start thinking about validating state replacement through cells and scripts.`
+
+## Who this note is for
+
+This note is for developers who already understand at least one blockchain beyond surface level. In practice, that usually means people coming from Solana, Ethereum, Polygon, Sui, or a similar ecosystem.
+
+That background helps, but it also creates drag. Once you understand one chain well, your mind starts carrying hidden assumptions about:
+
+- what state looks like
+- how state changes
+- where authorization lives
+- where programmability lives
+- what a transaction is really doing
+
+That is why learning `0 -> 1` can sometimes feel easier than learning `1 -> 2`. Starting from zero means you do not have to unlearn anything. Moving from Solana to CKB means you do.
+
+## Blockchain is a shared state machine
+
+The cleanest foundation for Week 1 is not "CKB is like Bitcoin" or "CKB has cells." It is this:
+
+`A blockchain is a shared state machine.`
+
+That definition matters because it shifts your attention to the right questions. Different chains are not mainly distinguished by branding, programming language, or virtual machine design. They differ in more fundamental ways:
+
+- what the unit of state is
+- how state gets updated
+- where authorization rules live
+- where business logic lives
+- how the system accounts for long-lived storage
+
+Once you look through that lens, CKB stops feeling abstract. It becomes a specific answer to the question of how a shared state machine should represent and validate state.
+
+## The first bridge: rows, accounts, objects, cells
+
+If you are coming from Solana, the easiest first bridge is to compare the unit of state across systems:
+
+- traditional databases use `rows`
+- Solana uses `accounts`
+- Sui uses `objects`
+- CKB uses `cells`
+
+The mapping is not perfect, but it is directionally useful. Every chain has some base object that carries state through the system. If you misunderstand that object, you misunderstand the chain.
+
+For CKB, that base object is the `cell`. Everything else in Week 1 becomes easier once that point lands.
+
+## The biggest shift: replacement instead of mutation
+
+This is the first real mental reset.
+
+On Solana, the default picture looks something like this: a program loads accounts, checks constraints, and mutates account data in place. Even when the flow is complex, the state model still feels mutation-oriented.
+
+On CKB, the center of gravity is different. A transaction consumes existing cells, scripts verify whether that transition is valid, and new cells are created as the successors to the old ones.
+
+This side-by-side sketch is the fastest way to see the model change:
+
+![Solana mutation versus CKB replacement](/images/mutation-vs-replacement.svg)
+
+That is why this contrast matters:
+
+- Solana: `programs mutating accounts`
+- CKB: `scripts validating replacement of state objects`
+
+This does not mean CKB is less programmable. It means programmability is organized around verification of transitions, not around a default expectation of in-place mutation.
+
+## The cell is the unit of state
+
+If the Solana developer's basic object is the account, the CKB developer's basic object is the cell.
+
+A cell is usually introduced through four parts:
+
+1. `capacity`
+2. `data`
+3. `lock`
+4. `type`
+
+That breakdown already reveals a lot about how CKB thinks.
+
+`capacity` tells you how much storage-backed value the cell carries. `data` is the payload. `lock` defines who is allowed to spend the cell. `type` can define the rules that govern what kind of state transition is valid for that cell.
+
+This is a better place to begin than VM details because it gets you closer to the actual design of the chain. On CKB, storage budget, ownership conditions, and transition rules are closely tied to the state object itself.
+
+## Programmability lives in scripts
+
+Solana teaches you to think in terms of `accounts + programs`. CKB is easier to reason about as `cells + scripts`.
+
+That analogy is useful, but only if you keep the translation precise:
+
+- a Solana account roughly maps to a CKB cell
+- signer and spend authorization logic roughly maps to a `lock script`
+- state-machine and business-rule logic roughly maps to a `type script`
+
+In plain terms:
+
+- the `lock script` controls who can spend the cell
+- the `type script` controls what state transitions are allowed
+
+This is why reducing CKB scripts to "just contracts" misses the point. Scripts are not only places where logic exists. They are the mechanism through which the validity of a transition is checked.
+
+## Ownership feels more asset-native
+
+One phrase you will hear often is that users own cells, not contracts. The important part of that claim is not the slogan. It is the design implication behind it.
+
+On CKB, the state object itself carries the conditions for how it can be spent and, when relevant, how it can evolve. The object is not simply a slot in a large mutable contract-owned storage map. That makes ownership semantics feel more explicit and more asset-native.
+
+If you are used to contract-centric systems, this is another place where CKB may feel unfamiliar at first. The object is more self-describing, and the transition rules are closer to the object being protected.
+
+## Storage is not treated as cheap
+
+CKB forces you to treat state as scarce.
+
+More bytes mean more `capacity`. More capacity means more long-lived claim on shared chain state. That is why `CKBytes` are not a side detail in the architecture. They are part of the architecture's view of what persistent state should cost.
+
+From a Solana perspective, the nearest intuition is account sizing and rent, but the comparison only goes so far. On CKB, storage accounting feels more native to the state object itself. The cost model is harder to ignore because it is built directly into the way cells are represented and carried forward.
+
+## Verification is the core operation
+
+If you only keep one sentence from this note, keep this one:
+
+`On CKB, computation serves verification.`
+
+That does not mean CKB cannot support rich logic. It means the cleanest way to read the chain is to ask:
+
+- what cells are being consumed
+- what cells are being created
+- what scripts must approve this transition
+
+That is the mental center of gravity. Once you adopt it, many CKB concepts stop feeling like isolated definitions and start fitting into one coherent model.
+
+## Why the PoW claim belongs in the same conversation
+
+CKB's arguments for proof of work make more sense once you see CKB as a durable shared state layer.
+
+When CKB advocates say PoW matters for decentralization and censorship resistance, the important point is not abstract ideology. The stronger claim is about the state being protected. If the base layer responsible for validating and preserving long-lived state is more neutral and harder to capture, then the assets and data living on top of it inherit stronger guarantees.
+
+That is why consensus and storage belong in the same discussion on CKB. The chain's security model is tied to its role as a durable store of shared state.
+
+## How to use this in Week 1
+
+Do not try to memorize every term in isolation. Use this mental model as a guide while you work through the foundation materials.
+
+Start with the local exercises in `week1/foundation`:
+
+- `01-cell-model-explorer.ts`
+- `02-transaction-anatomy.ts`
+- `03-capacity-calculator.ts`
+- `04-first-ckb-transfer.ts`
+
+Use them to make the abstractions concrete. As you go, keep translating what you see back into the same frame:
+
+- the `cell` is the base state object
+- transactions replace old state with new state
+- scripts verify whether that replacement is valid
+- storage has an explicit economic weight
+
+If that frame becomes intuitive, Week 1 has done its job. You are no longer trying to force CKB into a Solana-shaped box. You are learning to see why CKB was designed the way it was.

@@ -1,0 +1,40 @@
+---
+title: "CKB Docs"
+description: "A practical path into CKB, starting with the mental model shift developers need in Week 1."
+icon: "book-open"
+---
+
+## Start with the model, not the vocabulary
+
+Most developers arriving at CKB are not starting from zero. They are bringing assumptions from Solana, Ethereum, Sui, or another chain. That background helps, but it also creates confusion when CKB organizes state, ownership, and validation differently.
+
+These docs start from that reality. The goal is not to throw isolated definitions at you. The goal is to give you a clean mental model for how CKB works so the rest of the technical material lands faster.
+
+<CardGroup cols={2}>
+  <Card
+    title="Week 1: Solana to CKB"
+    icon="arrow-right-arrow-left"
+    href="/week-1/from-solana-to-ckb"
+  >
+    Learn the key shift from account mutation to cell-based state replacement and script verification.
+  </Card>
+</CardGroup>
+
+## Current focus
+
+The first section is built for developers coming from Solana. It explains why CKB feels unfamiliar at first and what assumptions need to change before the lower-level details make sense.
+
+That means the content is intentionally opinionated:
+
+- blockchain is treated as a shared state machine
+- the `cell` is the base state object
+- transactions replace state instead of mutating it in place
+- scripts validate transitions rather than acting like a direct copy of contract-centric execution models
+
+## Reading path
+
+If you are new to CKB but not new to blockchains, start here:
+
+1. Read the Week 1 bridge note.
+2. Work through the local foundation exercises in `week1/foundation`.
+3. Use the note as a reference whenever CKB concepts start feeling disconnected.
