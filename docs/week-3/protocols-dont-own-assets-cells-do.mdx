@@ -1,0 +1,157 @@
+---
+title: "Protocols Don't Own Assets. Cells Do."
+description: "Week 3 on CKB: xUDT, Spore, Omnilock, composability, and the operational discipline of managing cells as first-class assets."
+icon: "boxes"
+---
+
+# Protocols Don't Own Assets. Cells Do.
+
+Week 3 is where CKB stops looking like a contract platform with tokens attached and starts looking like an asset system where protocols are just validators around first-class cells.
+
+If Week 1 taught you to stop thinking in terms of account mutation, and Week 2 taught you to treat scripts as referees instead of active programs, Week 3 completes the move. The assets themselves are now in focus. xUDT makes fungible balances look like cell data instead of contract bookkeeping. Spore makes digital objects look like cells with intrinsic value instead of NFT pointers. Omnilock makes authorization look portable across signing ecosystems without turning the asset into a bridge receipt. Composability stops meaning "contract A calls contract B" and starts meaning "multiple validators agree that one state transition is legal." And then cell management shows up as the operational cost of this model, not an implementation footnote.
+
+That is the thesis for the week:
+
+`On CKB, protocols do not own the assets users interact with. Cells do.`
+
+## xUDT makes fungible tokens feel like assets, not balances in someone else's map
+
+BLUF: xUDT is easier to understand when you stop comparing it to ERC-20 and start comparing it to a first-class asset format.
+
+On Ethereum, an ERC-20 balance is usually an entry in a contract-owned storage map. On Solana, an SPL token balance is an account governed by a token program. Both are useful models, but both push you toward the same habit: the protocol feels like the thing that owns the asset logic, and the user feels like someone with permission to update a slot inside that protocol.
+
+CKB flips that. An xUDT balance is cell data. The token amount is a 16-byte little-endian `uint128`. The token identity lives in the type script identity, including the owner lock hash and the xUDT flags. Transfers happen by consuming old token cells and creating new token cells whose amounts still satisfy the xUDT rules.
+
+That is why `week3/tokens-composability/09-xudt-tokens.ts` starts with the invariant instead of the API:
+
+- how `uint128` amounts are encoded and decoded
+- how xUDT type args combine owner lock hash, flags, and optional extension payload
+- how owner mode changes supply semantics
+- how wallets scan balances by exact type-script identity instead of asking a contract for `balanceOf`
+
+The important translation for Solana and EVM developers is this:
+
+- ERC-20 intuition: "the contract owns the ledger"
+- SPL intuition: "the token program governs token accounts"
+- CKB xUDT intuition: "the cells are the balances, and the type script enforces conservation across replacement"
+
+That difference is not cosmetic. It changes how you reason about issuance, transfer, permissions, and composability.
+
+## Spore turns digital objects into cells with content, value, and finality
+
+BLUF: Spore matters because it treats the digital object itself as the on-chain state object, not as a pointer to metadata.
+
+Most NFT systems still train developers to think contract-first. The token ID is the real object, and the image, JSON, or game asset is somewhere else or is at least conceptually downstream. Spore does not do that. A Spore cell carries `content-type`, `content`, and optional `cluster_id` directly in the cell's data model. The object is the cell.
+
+That is why Spore feels much closer to CKB's asset thesis than a standard ERC-721 comparison suggests. The object has intrinsic storage-backed value because it is occupying real chain state. Its content is native to the cell. Its collection relationship is a link to a separate Cluster cell, not a nested storage structure. And because capacity is part of the object, destroying it can return that value to the holder rather than merely erasing a pointer.
+
+`week3/tokens-composability/10-spore-nfts.ts` is built around that mental model:
+
+- it walks through the Spore and Cluster cell structures
+- it models the Molecule-style layout instead of hiding the payload shape
+- it compares capacity requirements for text, SVG, JSON, and Lua content
+- it shows dry-run Cluster creation, Spore creation, decode flow, and a melt model
+
+One issue worth noticing here is that the protocol docs are split across Spore-specific docs and CKB mental models. That separation is fine once you understand the system, but it makes the first read easy to misinterpret. If you come in with an NFT default, you can miss the bigger point: Spore is not "NFT metadata, but nicer." It is "digital objects as first-class cells."
+
+## Omnilock separates asset control from chain-specific wallet assumptions
+
+BLUF: Omnilock is best understood as portable authentication for CKB cells, not as a bridging mechanism.
+
+This is one of the easiest places to get the story slightly wrong. Omnilock supports multiple signing styles, including CKB-native single-sig, Ethereum-style signing, and multisig variants. That makes it tempting to summarize it as "cross-chain assets" or "a wallet bridge." That summary is sloppy.
+
+Omnilock does not move the asset out of CKB. It changes who can authorize the spend of a CKB cell and how that authorization is expressed.
+
+That distinction matters because it keeps the ownership model clean:
+
+- the asset is still a CKB cell
+- the lock script is still deciding who can spend it
+- only the authentication convention changes
+
+`week3/tokens-composability/11-omnilock-wallet.ts` focuses on the exact confusion points that tend to trip people up:
+
+- the difference between Omnilock's auth mode byte and its separate ACP/time-lock/admin flags
+- how modes `0x00`, `0x01`, and `0x06` change the meaning of the 21-byte auth field
+- how Anyone-Can-Pay thresholds and time-lock encoding are packed into args
+- how witness layout differs between single-sig and multisig paths
+
+This is the right CKB framing:
+
+- on EVM, the wallet usually feels external to the asset standard
+- on Solana, signature rules feel runtime-native and program-facing
+- on CKB, the lock travels with the cell, and Omnilock lets that lock speak multiple authentication dialects
+
+That is interoperability at the authorization layer, not at the settlement layer.
+
+## Composability on CKB is validators agreeing on one replacement, not contracts calling each other
+
+BLUF: if you keep looking for contract-to-contract calls, you will miss where CKB composability actually lives.
+
+The default Solidity mental model says composability is call composition. Contract A calls contract B, maybe via contract C, and the stack of calls expresses the application. The default Solana mental model is similar, just framed as CPI. Either way, one active program feels like the orchestrator and the others feel like participants in its control flow.
+
+CKB has a different center of gravity. The transaction is the orchestration layer. Scripts do not call each other to share control. They all inspect the same proposed replacement of cells and either approve or veto it.
+
+That is why composability on CKB is better described as:
+
+`multiple validators agreeing on one state transition`
+
+Once that lands, several patterns become much easier to see:
+
+- script-as-parameter
+- token-gated access
+- multi-script AND validation
+- atomic swaps without standing escrow contracts
+- permissionless xUDT extension scripts
+
+`week3/tokens-composability/12-composability-patterns.ts` walks through each of those patterns and then turns them into a concrete governance exercise using xUDT plus proposal cells. The important point is not the particular voting design. The important point is that even governance can be expressed as cells carrying assets and state, with validators checking the legality of each replacement, rather than as a monolithic contract owning everyone's balances and proposals.
+
+For developers coming from Solidity or Anchor, that is the sentence to keep:
+
+- Solidity composition: "call into another contract and let it mutate shared state"
+- CKB composition: "bring all relevant cells into one transaction and let each validator inspect the same move"
+
+This makes some designs feel more explicit and less magical. It also means the transaction shape becomes part of the protocol design, not just a transport wrapper around a function call.
+
+## Cell management is not boring plumbing. It is part of the asset model
+
+BLUF: when cells are the assets, managing cell shape and count becomes part of protocol competence.
+
+On many account-based systems, state management pain often gets hidden behind a contract abstraction. Users see balances. Developers see storage slots. The messy parts get pushed into gas cost, indexing, or rent logic.
+
+CKB does not let you hide that easily, because the cell is the unit of ownership, storage, and replacement. If your wallet or protocol accumulates too many tiny cells, you feel it. If you split badly, you feel it. If you treat token cells, Spore cells, and treasury cells as interchangeable liquidity blobs, you eventually pay for that mistake operationally.
+
+That is why cell management belongs in the same week as xUDT and Spore. It is the wallet and protocol discipline that this asset model demands.
+
+`week3/tokens-composability/13-cell-management.ts` models:
+
+- fragmentation and consolidation
+- deliberate splitting of operational pools
+- dust sweeping
+- smallest-first, largest-first, best-fit, and branch-and-bound selection
+- wallet heuristics for plain CKB cells, xUDT operational cells, Spore-heavy cells, and treasury reserves
+
+This is also where one practical issue from the implementation work becomes useful to say out loud: the protocol story is elegant, but the ergonomics only stay elegant if the surrounding wallet discipline is good. Cell abundance is power, but unmanaged cell abundance becomes friction.
+
+That is not a flaw in the model. It is the operational price of making state objects explicit.
+
+## The week makes more sense if you read it as one argument
+
+Week 3 is not really five disconnected lessons about tokens, NFTs, wallets, composability, and wallet operations. It is one argument told from five angles:
+
+- xUDT says fungible assets are cells with conservation rules
+- Spore says digital objects are cells with content and intrinsic value
+- Omnilock says asset control can be portable without turning the asset into a bridge receipt
+- composability says protocols cooperate by co-validating transitions
+- cell management says the asset model has operational consequences you must respect
+
+If that argument clicks, CKB stops looking like "a contract chain with different syntax" and starts looking like what it actually is: a system where assets are native state objects and protocols are the rulebooks around how those objects can change.
+
+To make that concrete, read the local week 3 scripts in order:
+
+- `week3/tokens-composability/09-xudt-tokens.ts`
+- `week3/tokens-composability/10-spore-nfts.ts`
+- `week3/tokens-composability/11-omnilock-wallet.ts`
+- `week3/tokens-composability/12-composability-patterns.ts`
+- `week3/tokens-composability/13-cell-management.ts`
+
+They are written to keep returning to the same habit: state the invariant first, then show the structure that enforces it. That is the right reading posture for Week 3, and it is also the right posture for CKB itself.

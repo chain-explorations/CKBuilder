@@ -1,0 +1,26 @@
+{
+  "name": "tokens-composability",
+  "version": "1.0.0",
+  "description": "Week 3 CKB tokens, composability, and cell operations exercises",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run all",
+    "all": "npm run exercise:9 && npm run exercise:10 && npm run exercise:11 && npm run exercise:12 && npm run exercise:13",
+    "exercise:9": "node --experimental-strip-types 09-xudt-tokens.ts",
+    "exercise:10": "node --experimental-strip-types 10-spore-nfts.ts",
+    "exercise:11": "node --experimental-strip-types 11-omnilock-wallet.ts",
+    "exercise:12": "node --experimental-strip-types 12-composability-patterns.ts",
+    "exercise:13": "node --experimental-strip-types 13-cell-management.ts",
+    "test": "npm run all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@ckb-ccc/core": "^1.12.5",
+    "@spore-sdk/core": "^0.1.0",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
