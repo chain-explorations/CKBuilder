@@ -46,6 +46,12 @@
             "pages": [
               "week-4/trust-is-a-storage-decision"
             ]
+          },
+          {
+            "group": "Week 5",
+            "pages": [
+              "week-5/production-is-where-cells-meet-the-real-world"
+            ]
           }
         ]
       }

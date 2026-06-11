@@ -9,10 +9,13 @@ The published documentation lives at [ckb.danielasaboro.com](https://ckb.daniela
 - `docs/` contains the source for the public documentation site.
 - `week1/foundation/` contains early exercises used to explore core CKB concepts such as cells, transactions, capacity, and basic transfers.
 - `week2/scripts/` contains exercises on lock scripts, type scripts, hash locks, error-code debugging, and a counter type script, with reference Rust contracts under `week2/scripts/contracts/`.
+- `week3/tokens-composability/` contains exercises on xUDT, Spore, Omnilock, composability patterns, and cell-management heuristics.
+- `week4/infrastructure/` contains exercises on RPC access, full-node operations, and light-client design.
+- `week5/production/` contains exercises on RGB++ bindings, token DEX order cells, Spore marketplace flows, and mainnet deployment operations.
 
 ## Current learning path
 
-Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine.
+Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine. Week 3 moves into assets and composability, Week 4 into trust and infrastructure choices, and Week 5 into production patterns: RGB++, DEX order cells, NFT marketplace flows, and mainnet operational discipline.
 
 The broader goal is not just to learn CKB terminology. It is to document the exploration clearly enough that I can use it to evaluate what I should build on CKB as the research progresses.
 
@@ -93,6 +96,29 @@ The exercise entry points are:
 - `16-light-client.ts`
 
 Each exercise has an optional live path behind an environment variable: `14-rpc-dashboard.ts` queries the public testnet RPC by default (set `CKB_RUN_RPC_LIVE=0` to force pure dry-run), `15-full-node.ts` reads a local node when `CKB_RUN_NODE_LIVE=1`, and `16-light-client.ts` probes a local `ckb-light-client` when `CKB_RUN_LIGHT_LIVE=1`.
+
+## Running the Week 5 exercises
+
+The Week 5 production package uses the same typed Node workflow and runs cleanly with no funded credentials.
+
+```bash
+cd week5/production
+npm test
+```
+
+The exercise entry points are:
+
+- `17-rgbpp-explorer.ts`
+- `18-token-dex.ts`
+- `19-nft-marketplace.ts`
+- `20-mainnet-deployment.ts`
+
+Optional live reads and dry-run behavior:
+
+- `17-rgbpp-explorer.ts` is dry-run by default and can attempt a read-only public testnet query with `CKB_RUN_RGBPP_LIVE=1`.
+- `18-token-dex.ts` is pure dry-run.
+- `19-nft-marketplace.ts` is pure dry-run.
+- `20-mainnet-deployment.ts` is pure dry-run and also exposes `npm run checklist` for the concise operational checklist.
 
 ## Documentation workflow
 

@@ -1,0 +1,20 @@
+{
+  "name": "production",
+  "version": "1.0.0",
+  "description": "Week 5 CKB production-pattern exercises: RGB++, DEXes, NFT marketplaces, and mainnet ops",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run all",
+    "all": "npm run exercise:17 && npm run exercise:18 && npm run exercise:19 && npm run exercise:20",
+    "exercise:17": "node --experimental-strip-types 17-rgbpp-explorer.ts",
+    "exercise:18": "node --experimental-strip-types 18-token-dex.ts",
+    "exercise:19": "node --experimental-strip-types 19-nft-marketplace.ts",
+    "exercise:20": "node --experimental-strip-types 20-mainnet-deployment.ts",
+    "checklist": "node --experimental-strip-types 20-mainnet-deployment.ts --checklist",
+    "test": "npm run all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

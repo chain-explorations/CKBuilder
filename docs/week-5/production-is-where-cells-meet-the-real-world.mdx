@@ -1,0 +1,101 @@
+---
+title: "Production Is Where Cells Meet the Real World"
+description: "Week 5 on CKB: RGB++, order-book DEXes, Spore marketplaces, and mainnet operations as one production story about cells, scripts, and risk."
+icon: "factory"
+---
+
+# Production Is Where Cells Meet the Real World
+
+Week 5 looks broader than the earlier weeks. RGB++ touches Bitcoin. The DEX lesson looks like market structure. The NFT marketplace lesson looks application-specific. The mainnet deployment lesson looks operational. Read one by one, they can feel like four different subjects.
+
+They are not four different subjects. They are the same subject under production pressure.
+
+If Week 3 argued that protocols do not own assets, cells do, then Week 5 asks what that means once those cells start carrying real counterparties, real content, and real money. A Bitcoin UTXO bridged into CKB via RGB++ is still an ownership problem. A spot trade between two token holders is still a transaction-shape problem. A Spore listing is still a question of who can lawfully replace which cells with which outputs. And mainnet operations are the part where the same primitives stop being educational and start being expensive.
+
+That is the thesis for the week:
+
+`On CKB, production systems are built by expressing ownership, exchange, and upgrade risk directly in cells and scripts rather than hiding them behind contracts or servers.`
+
+## RGB++ is the bridge case where identity matters more than custody
+
+BLUF: RGB++ is easiest to understand when you stop asking "where is the bridge contract?" and start asking "which CKB cell corresponds to which Bitcoin UTXO?"
+
+Most bridge discussions on EVM chains begin with custody. A contract or multisig holds asset X on chain A and mints receipt Y on chain B. The critical questions are then validator sets, fraud windows, mint authority, and whether the receipt is redeemable. Those are valid questions for that design. They are just not the center of gravity here.
+
+RGB++ pushes you toward a different framing. The anchor is the Bitcoin outpoint itself, and the CKB-side identity is derived from that anchor. One Bitcoin UTXO maps to one CKB lock-args payload: reversed transaction ID bytes plus the output index in little-endian form. That means the bridge is fundamentally about preserving object identity across chains, not about parking user assets in a contract and issuing an abstract claim.
+
+That shift matters because it keeps CKB aligned with its native model. The thing you query is a cell with an exact lock script. The thing you reason about is a live or spent object, not a row in a bridge-owned ledger. And the thing that changes when the Bitcoin side changes is the cell identity itself. The UTXO turns over; the corresponding CKB binding turns over.
+
+For developers coming from Solana or Ethereum, this is a useful mental correction. On Solana, cross-chain assets often arrive as mints whose trust assumptions live in a bridge program and its guardians. On Ethereum, the same is usually expressed as wrapped ERC-20 state inside a contract. RGB++ says the important question is not "which contract minted the wrapped asset?" but "what exact outpoint is this CKB object bound to?"
+
+That is why `week5/production/17-rgbpp-explorer.ts` spends its time on lock-args encoding, decoding, and script-based lookup rather than on wallets or private keys. The bridge case is really an identity case.
+
+## The DEX is the market case where exchange becomes transaction geometry
+
+BLUF: on CKB, a DEX order is not primarily a mutable order-book entry. It is a cell whose legal replacement encodes the trade.
+
+Account-based chains train developers to picture a DEX as a contract with internal state: orders stored in mappings, pool reserves stored in slots, balances updated inside a function call. Even on Solana, where accounts are more explicit, developers still often think of the market as program-owned state that gets mutated by instructions.
+
+CKB changes the center of the picture. The order cell is the thing being offered. A full fill consumes it and emits the seller payout plus the buyer's asset. A partial fill consumes it and emits a remainder order cell that still carries the unfilled inventory at the preserved price ratio. A cancel consumes it and returns the locked asset to the maker. The market is therefore less about a contract mutating an internal book and more about a transaction proving that a particular cell replacement is lawful.
+
+This is where the script split becomes operationally important. The xUDT type scripts are not the DEX. They enforce token identity and conservation. The DEX lock script is not the token. It enforces whether that order cell may be consumed by a fill or cancel path and whether the replacement preserves the terms the maker exposed. Those are distinct jobs, and production safety depends on keeping them distinct.
+
+That separation also clarifies front-running. On Ethereum, front-running is often described through mempool ordering against contract state. On CKB, the object under contention is the order cell itself. Two takers can race to consume the same live cell, but only one transaction can actually win the replacement. Atomicity falls out of cell consumption rather than from a contract noticing that a slot changed underneath it.
+
+Compared with an AMM, the order-cell model is more explicit and more mechanical. The AMM hides pricing in a reserve curve. The order cell exposes pricing as a transaction-shape constraint. Neither is universally better, but the order-book version highlights something distinctly CKB-native: exchange is something validators co-approve by inspecting one proposed cell transition.
+
+That is the point of `week5/production/18-token-dex.ts`. It prints full fills, partial fills, remainder math, and cancel paths because the market story only really lands once the geometry is visible.
+
+## The NFT marketplace is the application case where content and commerce both become cells
+
+BLUF: a Spore marketplace works when the object, the listing, and the purchase path are all treated as first-class cell-level objects.
+
+The easiest mistake to make with NFTs is to slip back into the contract-centric mental model. The marketplace feels like the application, and the asset feels like something the application references. Week 3 already pushed against that by treating a Spore as the object itself rather than a pointer to metadata. Week 5 extends that logic into commerce.
+
+A marketplace listing does not need to be imagined as a database row with an off-chain checkout flow wrapped around it. It can be modeled as a sale cell plus a marketplace-locked Spore cell. Buying consumes both and creates three things that matter: the buyer-owned Spore cell, the seller payout cell, and any required change. Canceling reverses the listing by consuming the sale objects and restoring seller ownership. The marketplace is therefore not "holding" the NFT in the contract sense. It is expressing a legal transfer path in cells and scripts.
+
+This is also where frontend discipline becomes part of protocol correctness. A marketplace UI that renders the wrong Spore, pays the wrong seller, targets the wrong recipient, or trusts the wrong script hash is not just buggy presentation. It is misdescribing the transaction the user is about to sign. On a chain where the object itself is the cell, frontend validation has to verify cell identity with the same seriousness a DeFi frontend verifies token mints and pool addresses.
+
+Content handling sharpens the point. A Spore can carry SVG, PNG, JSON, text, or something more exotic. The UI has to interpret those content types safely. The wallet has to sign ownership changes safely. Those are adjacent concerns, not identical ones. A good production marketplace keeps the boundary clean: the frontend previews and validates; the wallet authorizes the spend. Neither should assume the other already checked the business logic.
+
+On Ethereum, large parts of this flow often get hidden behind marketplace contracts and centralized metadata hosting. On Solana, the account model is more explicit, but the marketplace still often feels like the dominant object. On CKB, the sale cell and Spore cell make the application flow legible at the asset-object level.
+
+That is why `week5/production/19-nft-marketplace.ts` focuses on mint, list, buy, cancel, frontend validation rules, and content rendering policy rather than on building a full app UI. The hard part is understanding the application boundary correctly.
+
+## Mainnet deployment is the operational case where the same primitives become expensive
+
+BLUF: by the time you reach mainnet, `hash_type`, script-hash verification, custody, monitoring, and incident response are not support concerns. They are part of the protocol.
+
+This is the section that looks least like the others until you notice what production is really asking: can the same cells and scripts still be trusted when real value depends on them?
+
+That question surfaces first in `hash_type`. A `data1` reference pins code by hash. A `type` reference preserves an upgrade path by pointing at a type-ID-governed code cell. Neither mode is "better" in the abstract. Each is a production promise. `data1` says immutability is the safety story. `type` says governed upgradeability is the safety story. The operational mistake is not picking one or the other. It is forgetting which promise you made and verifying the chain as though you made the other one.
+
+It surfaces again in custody. A protocol that retains an upgrade path is really saying that whoever controls the relevant authority controls production behavior. If that authority lives in a hot key on a laptop, the protocol does too. Hardware wallets, multisig, role separation, and rehearsed witness flows are therefore not optional polish. They are how a cell-based system stays a cell-based system instead of quietly becoming a "whoever still has the key" system.
+
+And it surfaces again in monitoring. By Week 5, "the protocol" includes alerting on unknown script hashes, repeated dead-cell failures, strange fee spikes, and suspicious privileged activity. Once users store value in live cells, observability is no longer separate from protocol design. It is the part that tells you when the same transaction shapes you modeled in Week 3 and Week 4 are no longer behaving under adversarial or degraded conditions.
+
+Developers coming from Solidity will recognize the family resemblance to proxy administration, pauser keys, deployment manifests, and incident playbooks. Solana developers will recognize the upgrade-authority story and the operational importance of matching deployed program IDs and expected binaries. CKB's version is expressed in its own native terms: exact code hashes, exact script references, exact cells, exact witnesses.
+
+That is the frame for `week5/production/20-mainnet-deployment.ts`. It treats `devnet -> testnet -> mainnet` as increasing consequence, not just changing network IDs, and it prints the checklist that operationalizes that consequence.
+
+## Production on CKB is one argument told four ways
+
+Week 5 makes more sense if you stop reading it as bridge week plus market week plus NFT week plus ops week.
+
+It is one argument:
+
+- RGB++ says cross-chain ownership is a cell-identity problem
+- the DEX says exchange is a transaction-shape problem
+- the NFT marketplace says application flow is a cell-coordination problem
+- mainnet deployment says operational safety is a script-identity and custody problem
+
+All four are production versions of the same earlier lesson: CKB does not want to hide state objects behind a monolithic contract abstraction. It wants you to work directly with cells, scripts, and the legality of their replacement.
+
+To make that concrete, read the local Week 5 scripts in order:
+
+- `week5/production/17-rgbpp-explorer.ts`
+- `week5/production/18-token-dex.ts`
+- `week5/production/19-nft-marketplace.ts`
+- `week5/production/20-mainnet-deployment.ts`
+
+Taken together, they show production CKB from four angles that collapse into one habit: be explicit about which object is being owned, exchanged, rendered, upgraded, or trusted. On CKB, that explicitness is not ceremony. It is the production model.

@@ -27,9 +27,33 @@ These docs start from that reality. The goal is not to throw isolated definition
   </Card>
 </CardGroup>
 
+<CardGroup cols={3}>
+  <Card
+    title="Week 3: Assets and Composability"
+    icon="boxes"
+    href="/week-3/protocols-dont-own-assets-cells-do"
+  >
+    xUDT, Spore, Omnilock, composability, and the cell-management discipline that follows from asset-first state.
+  </Card>
+  <Card
+    title="Week 4: Infrastructure"
+    icon="scale"
+    href="/week-4/trust-is-a-storage-decision"
+  >
+    RPCs, full nodes, and light clients as explicit trust settings rather than invisible defaults.
+  </Card>
+  <Card
+    title="Week 5: Production Patterns"
+    icon="factory"
+    href="/week-5/production-is-where-cells-meet-the-real-world"
+  >
+    RGB++, order cells, Spore marketplaces, and mainnet operations as one production story about cells and scripts.
+  </Card>
+</CardGroup>
+
 ## Current focus
 
-The first section is built for developers coming from Solana. It explains why CKB feels unfamiliar at first and what assumptions need to change before the lower-level details make sense.
+The learning path now moves from the Week 1 mental-model reset into scripts, assets, infrastructure, and production patterns. It is still written from the perspective of a developer arriving with Solana and Ethereum assumptions, but the scope now reaches all the way to mainnet operations.
 
 That means the content is intentionally opinionated:
 
@@ -43,5 +67,5 @@ That means the content is intentionally opinionated:
 If you are new to CKB but not new to blockchains, start here:
 
 1. Read the Week 1 bridge note.
-2. Work through the local foundation exercises in `week1/foundation`.
-3. Use the note as a reference whenever CKB concepts start feeling disconnected.
+2. Work through the local exercises week by week from `week1/` through `week5/`.
+3. Use the docs pages as the conceptual spine and the local scripts as the concrete transaction walkthroughs.
