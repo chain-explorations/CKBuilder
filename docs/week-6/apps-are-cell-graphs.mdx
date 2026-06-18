@@ -1,0 +1,94 @@
+---
+title: "Apps Are Cell Graphs"
+description: "Week 6 turns the earlier CKB lessons into a full protocol-design exercise: launch cells, milestone cells, contribution receipts, time-locked refunds, capacity planning, indexing, and audit readiness."
+icon: "workflow"
+---
+
+# Apps Are Cell Graphs
+
+Week 6 is the capstone for the first five weeks. The earlier lessons introduced the pieces: cells, state replacement, lock scripts, type scripts, xUDT, Spore, RPC/indexer access, light-client trust, DEX order cells, marketplace flows, and mainnet operations.
+
+This week puts those pieces under one design problem: a cell-native milestone escrow and launchpad protocol.
+
+The thesis is:
+
+`On CKB, serious applications are designed as explicit cell graphs: ownership, assets, time, storage cost, and failure recovery all live in transaction shape.`
+
+## Why Week 6 is a capstone
+
+The point of the capstone is not to ship a production launchpad. It is to force the design habit CKB keeps asking for.
+
+An account-based application often starts with a contract and a set of internal mappings. The protocol "owns" balances, milestones, contribution records, and release state. CKB pushes in a different direction. The application begins as a graph of cells:
+
+- a project launch cell that identifies the protocol instance
+- milestone cells that represent release gates
+- contributor receipt cells that make refund claims explicit
+- treasury/funding cells that actually hold CKB or xUDT value
+- optional Spore/content cells for larger project metadata or proof material
+
+The protocol is therefore not a hidden balance sheet. It is a set of live objects whose legal replacements are the application.
+
+## The launchpad app as a cell graph
+
+The first local exercise, `week6/protocol-design/21-protocol-blueprint.ts`, prints the full object model.
+
+Creating a launch consumes ordinary owner funding cells and creates the project launch cell, milestone cells, and optional metadata proof. Contributing consumes user CKB or xUDT cells and creates treasury value plus receipt cells. Releasing funds consumes an approved milestone and the current treasury cell, then emits the project payout and a smaller treasury replacement. Refunding consumes the contributor receipt and treasury cell after the deadline, then emits the contributor payout.
+
+That framing matters because it makes failure recovery concrete. A stale treasury input fails because the cell is already dead. A wrong recipient fails because the output lock hash does not match the policy. A mismatched xUDT fails because the type hash is not the asset the receipt promised.
+
+## Serialization and capacity as protocol design
+
+`week6/protocol-design/22-molecule-capacity-planner.ts` treats schema design as an economic decision.
+
+Molecule matters here because CKB protocols need canonical bytes, stable layouts, offsets, and deterministic decoding. You do not need to build a Molecule compiler to learn the lesson. You do need to understand that every persistent field has two costs:
+
+- validation cost, because scripts and indexers must read it correctly
+- storage cost, because every byte locks capacity
+
+The capstone models `ProjectData`, `MilestoneData`, `ContributionReceipt`, and `ReleasePolicy`. It also compares inline metadata against a reference to a Spore/content cell. The tradeoff is simple but important: inline data can simplify lookup, while referenced content keeps critical protocol cells smaller and makes large metadata its own object.
+
+## Time-locks and refunds as transaction preconditions
+
+`week6/protocol-design/23-timelock-refund-engine.ts` is about deadlines.
+
+Time on CKB is not a cron job. There is no protocol worker that wakes up and refunds contributors. Instead, a refund transaction becomes valid when it can prove the relevant time condition through its inputs, witnesses, and header dependencies.
+
+That changes how the protocol should be described. A milestone deadline is not a scheduled callback. It is a precondition for a transaction path. The exercise models early refund failure, valid late refund, wrong release recipient, stale treasury cell, double-release style failure, and xUDT type-hash mismatch.
+
+The core habit is to ask: what exact transaction shape becomes valid after the deadline?
+
+## Indexing, monitoring, and auditability
+
+`week6/protocol-design/24-indexer-monitoring-audit.ts` turns the capstone into an operational system.
+
+A production CKB app must be able to find its cells, verify its cells, and explain why each transition is valid. That means the design needs indexer search keys for project cells, milestone cells, receipt cells, and treasury cells. It also needs light-client watch lists, full-node verification paths, and monitoring signals tied to protocol risk.
+
+Good alerts are not just server-health checks. They should notice unknown script hashes, approaching deadlines, stuck funds, dead-cell failure bursts, and suspicious release attempts. The audit checklist should map every rule back to the cell, script, witness, or header precondition that enforces it.
+
+## What to build locally
+
+Run the capstone exercises from the Week 6 package:
+
+```bash
+cd week6/protocol-design
+npm test
+```
+
+The scripts are dry-run by default. They need no funded wallet, no private key, and no live RPC. They use deterministic sample data and assertions for the important protocol rules:
+
+- capacity math must not underfund modeled cells
+- contribution totals must match receipt totals
+- milestone release cannot exceed funded amount
+- refunds fail before the deadline
+- release fails for wrong recipient or wrong script hash
+- xUDT flows reject mismatched type hashes
+- monitoring includes critical alerts
+
+Read the scripts in order:
+
+- `21-protocol-blueprint.ts`
+- `22-molecule-capacity-planner.ts`
+- `23-timelock-refund-engine.ts`
+- `24-indexer-monitoring-audit.ts`
+
+Taken together, they are the first full protocol design pass in this repository: a launchpad/escrow app where state, money, time, storage, observability, and auditability are all expressed as cell-level design.

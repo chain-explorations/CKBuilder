@@ -12,10 +12,11 @@ The published documentation lives at [ckb.danielasaboro.com](https://ckb.daniela
 - `week3/tokens-composability/` contains exercises on xUDT, Spore, Omnilock, composability patterns, and cell-management heuristics.
 - `week4/infrastructure/` contains exercises on RPC access, full-node operations, and light-client design.
 - `week5/production/` contains exercises on RGB++ bindings, token DEX order cells, Spore marketplace flows, and mainnet deployment operations.
+- `week6/protocol-design/` contains the capstone exercise: a cell-native milestone escrow / launchpad protocol with capacity planning, refunds, indexing, monitoring, and audit readiness.
 
 ## Current learning path
 
-Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine. Week 3 moves into assets and composability, Week 4 into trust and infrastructure choices, and Week 5 into production patterns: RGB++, DEX order cells, NFT marketplace flows, and mainnet operational discipline.
+Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine. Week 3 moves into assets and composability, Week 4 into trust and infrastructure choices, Week 5 into production patterns, and Week 6 into full protocol design: a milestone escrow / launchpad app modeled as explicit cell graphs.
 
 The broader goal is not just to learn CKB terminology. It is to document the exploration clearly enough that I can use it to evaluate what I should build on CKB as the research progresses.
 
@@ -119,6 +120,24 @@ Optional live reads and dry-run behavior:
 - `18-token-dex.ts` is pure dry-run.
 - `19-nft-marketplace.ts` is pure dry-run.
 - `20-mainnet-deployment.ts` is pure dry-run and also exposes `npm run checklist` for the concise operational checklist.
+
+## Running the Week 6 exercises
+
+The Week 6 protocol-design package uses the same typed Node workflow and runs cleanly with no funded credentials.
+
+```bash
+cd week6/protocol-design
+npm test
+```
+
+The exercise entry points are:
+
+- `21-protocol-blueprint.ts`
+- `22-molecule-capacity-planner.ts`
+- `23-timelock-refund-engine.ts`
+- `24-indexer-monitoring-audit.ts`
+
+The capstone is dry-run by default. It models a milestone escrow / launchpad protocol where launch cells, milestone cells, contribution receipts, treasury cells, time-locked refunds, capacity planning, indexing, monitoring, and audit checks are all treated as protocol design surfaces.
 
 ## Documentation workflow
 

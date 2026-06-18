@@ -1,0 +1,19 @@
+{
+  "name": "protocol-design",
+  "version": "1.0.0",
+  "description": "Week 6 CKB protocol-design capstone: launch cells, milestone escrow, refunds, capacity planning, indexing, and audit readiness",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run all",
+    "all": "npm run exercise:21 && npm run exercise:22 && npm run exercise:23 && npm run exercise:24",
+    "exercise:21": "node --experimental-strip-types 21-protocol-blueprint.ts",
+    "exercise:22": "node --experimental-strip-types 22-molecule-capacity-planner.ts",
+    "exercise:23": "node --experimental-strip-types 23-timelock-refund-engine.ts",
+    "exercise:24": "node --experimental-strip-types 24-indexer-monitoring-audit.ts",
+    "test": "npm run all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

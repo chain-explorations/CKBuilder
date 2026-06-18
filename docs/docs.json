@@ -52,6 +52,12 @@
             "pages": [
               "week-5/production-is-where-cells-meet-the-real-world"
             ]
+          },
+          {
+            "group": "Week 6",
+            "pages": [
+              "week-6/apps-are-cell-graphs"
+            ]
           }
         ]
       }
