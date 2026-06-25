@@ -1,0 +1,115 @@
+---
+title: "The App Is the Transaction Pipeline"
+description: "Week 7 turns the Week 6 cell-graph protocol into an app integration layer: transaction building, wallet previews, indexer reads, and frontend state."
+icon: "route"
+---
+
+# The App Is the Transaction Pipeline
+
+Week 6 ended with a protocol design: launch cells, milestone cells, contribution receipts, treasury cells, deadline rules, indexing plans, monitoring signals, and audit surfaces. That is the right place to end a protocol-design capstone.
+
+It is not the right place to end an app.
+
+Week 7 asks what has to happen around that protocol before a user can safely click a button. On CKB, the app is not just a server, a wallet adapter, or a React page. The app is the transaction pipeline:
+
+`On CKB, the app is the transaction pipeline: index live cells, assemble valid replacements, preview the exact move, sign with the right wallet boundary, and verify before broadcast.`
+
+That sentence is the week.
+
+## The protocol is readable, but the app must make it usable
+
+A cell graph is a strong protocol model because the important objects are explicit. You can point at the project cell, the milestone cell, the receipt cell, and the treasury cell. You can describe which inputs are consumed and which outputs replace them.
+
+That explicitness does not remove app complexity. It moves the complexity into the place where users actually interact with the protocol.
+
+The frontend and backend have to find the right live cells. The transaction builder has to assemble a legal replacement, not just call a contract method. The wallet has to sign the right witness group without being treated as a business-logic engine. The UI has to explain why a release, refund, contribution, or close action is available or blocked.
+
+This is the main difference from a contract-centric mental model. In many account-based apps, the client mostly chooses a method and passes arguments. On CKB, the client brings the proposed state transition to the chain. The transaction is the application move.
+
+## Transaction builders are app logic
+
+`week7/app-integration/25-transaction-builder.ts` starts with the transaction builder because that is where the protocol becomes concrete.
+
+A contribution transaction is not "call contribute". It consumes contributor-owned cells, creates or updates treasury value, creates a receipt cell, returns change, attaches the right cell deps, and prepares a contributor witness group.
+
+A release transaction is not "call release". It consumes the current treasury cell and the relevant milestone cell, emits the project payout, emits the smaller treasury replacement, and records the milestone as released. If the treasury input is stale, the recipient lock is wrong, the escrow type hash is wrong, or the release exceeds remaining funds, the app should reject the plan before signature.
+
+A refund transaction is not "call refund". It needs the receipt, the treasury cell, the contributor lock, and the header proof that makes the deadline rule true. If the deadline has not passed or the header proof is missing, there is nothing useful for the wallet to sign.
+
+The builder is therefore part of protocol safety. It is not consensus code, but it is the layer that decides whether the user is being shown a valid proposed replacement.
+
+## Wallet signing is a boundary, not a shortcut
+
+`week7/app-integration/26-wallet-signing-preview.ts` models the wallet boundary.
+
+A wallet proves control over locks and produces signatures for witness groups. That is already a serious job. It should not also be expected to understand every launchpad rule, decode every project-specific cell, and decide whether the frontend assembled a sane release or refund.
+
+The app has to preview the exact move before asking for a signature:
+
+- consumed cells
+- created cells
+- signer role
+- recipient lock hashes
+- asset deltas
+- warnings from stale or suspicious plan checks
+
+This preview is not just nice UX. It is the point where the user can still refuse a wrong transaction. If a treasury recipient lock was replaced with an attacker lock, or if the plan was assembled from stale indexer data, the frontend should block signing rather than hope the wallet or chain catches the problem later.
+
+## Indexers are read accelerators, not final authority
+
+`week7/app-integration/27-indexer-query-layer.ts` focuses on the read path.
+
+CKB apps need indexers because users and apps need to find relevant cells quickly. A launchpad needs project cells, milestone cells, receipt cells, and treasury cells. Pagination matters because missing a page can mean missing a receipt or selecting the wrong treasury candidate.
+
+But an indexer result is not a spending guarantee. A cell can become dead between query time and signing time. A backend can lag. A local cache can be stale. The app still has to revalidate candidate inputs before broadcast, ideally against a full-node live-cell check or another trusted verification path.
+
+That produces a useful division of responsibility:
+
+- the indexer finds candidate cells
+- the app marks stale candidates and preserves cursor state
+- the full-node path verifies the final inputs before broadcast
+
+This is the same trust lesson as Week 4, now applied directly to app state.
+
+## The frontend is a read model over live cells
+
+`week7/app-integration/28-frontend-read-model.ts` treats the UI as a projection of cells.
+
+The project page should not invent a separate truth. It should show a read model assembled from live project, milestone, receipt, and treasury cells. The important question for every button is not "did the backend set enabled=true?" It is "can the app build the corresponding transaction from the cells it currently sees?"
+
+That is why disabled-action reasons matter. A useful frontend can say:
+
+- refund unlocks at epoch 1251
+- wallet is not project owner
+- treasury still holds 1500 CKB
+- treasury cell is stale
+- no receipt exists for this wallet
+
+Those messages are not filler. They are the UI version of the transaction pipeline. They tell the user which cell, role, time condition, or treasury state prevents the next move.
+
+## What to build locally
+
+Run the Week 7 exercises from the app-integration package:
+
+```bash
+cd week7/app-integration
+npm test
+```
+
+The scripts are dry-run by default. They need no funded wallet, no private key, no live RPC, and no broadcast path. They use deterministic sample data and assertions for the important integration rules:
+
+- contribution plans balance inputs, outputs, receipts, and treasury amounts
+- refunds require deadline/header proof and reject early refunds
+- releases reject stale treasury cells, wrong recipients, wrong type hashes, and over-release
+- wallet previews expose consumed cells, created cells, signer roles, recipients, deltas, and warnings
+- indexer pagination preserves cursor state and revalidates live cells before broadcast
+- frontend read models disable invalid user actions with explicit reasons
+
+Read the scripts in order:
+
+- `25-transaction-builder.ts`
+- `26-wallet-signing-preview.ts`
+- `27-indexer-query-layer.ts`
+- `28-frontend-read-model.ts`
+
+Taken together, they turn the Week 6 protocol into the app-side habit CKB demands: do not hide the state transition behind a button. Find the live cells, build the exact replacement, preview it, sign only the right witness boundary, and verify before broadcast.

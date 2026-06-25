@@ -58,6 +58,12 @@
             "pages": [
               "week-6/apps-are-cell-graphs"
             ]
+          },
+          {
+            "group": "Week 7",
+            "pages": [
+              "week-7/the-app-is-the-transaction-pipeline"
+            ]
           }
         ]
       }

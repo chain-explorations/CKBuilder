@@ -13,10 +13,11 @@ The published documentation lives at [ckb.danielasaboro.com](https://ckb.daniela
 - `week4/infrastructure/` contains exercises on RPC access, full-node operations, and light-client design.
 - `week5/production/` contains exercises on RGB++ bindings, token DEX order cells, Spore marketplace flows, and mainnet deployment operations.
 - `week6/protocol-design/` contains the capstone exercise: a cell-native milestone escrow / launchpad protocol with capacity planning, refunds, indexing, monitoring, and audit readiness.
+- `week7/app-integration/` contains app-layer exercises around that protocol: transaction building, wallet signing previews, indexer query paths, and frontend read models.
 
 ## Current learning path
 
-Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine. Week 3 moves into assets and composability, Week 4 into trust and infrastructure choices, Week 5 into production patterns, and Week 6 into full protocol design: a milestone escrow / launchpad app modeled as explicit cell graphs.
+Week 1 was about the mental model shift from Solana's account-based patterns to CKB's model of cells, state replacement, and script-based validation. Week 2 turns that model into something you can build with: lock scripts versus type scripts, the three-field script struct, hash-type as an upgrade choice, the hash lock as a concrete lock-script walk-through, debugging through exit codes, and a counter as an on-chain state machine. Week 3 moves into assets and composability, Week 4 into trust and infrastructure choices, Week 5 into production patterns, Week 6 into full protocol design, and Week 7 into app integration: the transaction builder, wallet preview, indexer, and frontend read model around a milestone escrow / launchpad cell graph.
 
 The broader goal is not just to learn CKB terminology. It is to document the exploration clearly enough that I can use it to evaluate what I should build on CKB as the research progresses.
 
@@ -138,6 +139,24 @@ The exercise entry points are:
 - `24-indexer-monitoring-audit.ts`
 
 The capstone is dry-run by default. It models a milestone escrow / launchpad protocol where launch cells, milestone cells, contribution receipts, treasury cells, time-locked refunds, capacity planning, indexing, monitoring, and audit checks are all treated as protocol design surfaces.
+
+## Running the Week 7 exercises
+
+The Week 7 app-integration package uses the same typed Node workflow and runs cleanly with no funded credentials, live RPC, or broadcast path.
+
+```bash
+cd week7/app-integration
+npm test
+```
+
+The exercise entry points are:
+
+- `25-transaction-builder.ts`
+- `26-wallet-signing-preview.ts`
+- `27-indexer-query-layer.ts`
+- `28-frontend-read-model.ts`
+
+Week 7 turns the Week 6 protocol into an app pipeline: index live cells, assemble valid replacements, preview the exact move, sign with the right wallet boundary, and verify before broadcast.
 
 ## Documentation workflow
 

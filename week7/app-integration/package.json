@@ -1,0 +1,19 @@
+{
+  "name": "app-integration",
+  "version": "1.0.0",
+  "description": "Week 7 CKB app-integration exercises: transaction builders, wallet previews, indexer read paths, and frontend read models",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run all",
+    "all": "npm run exercise:25 && npm run exercise:26 && npm run exercise:27 && npm run exercise:28",
+    "exercise:25": "node --experimental-strip-types 25-transaction-builder.ts",
+    "exercise:26": "node --experimental-strip-types 26-wallet-signing-preview.ts",
+    "exercise:27": "node --experimental-strip-types 27-indexer-query-layer.ts",
+    "exercise:28": "node --experimental-strip-types 28-frontend-read-model.ts",
+    "test": "npm run all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}

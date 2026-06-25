@@ -1,6 +1,6 @@
 ---
 title: "CKB Docs"
-description: "A practical path into CKB, starting with the mental model shift developers need in Week 1."
+description: "A practical path into CKB, from the cell-model shift through protocol design and app integration."
 icon: "book-open"
 ---
 
@@ -51,7 +51,7 @@ These docs start from that reality. The goal is not to throw isolated definition
   </Card>
 </CardGroup>
 
-<CardGroup cols={1}>
+<CardGroup cols={2}>
   <Card
     title="Week 6: Apps Are Cell Graphs"
     icon="workflow"
@@ -59,11 +59,18 @@ These docs start from that reality. The goal is not to throw isolated definition
   >
     A milestone escrow and launchpad capstone covering protocol blueprints, capacity planning, refunds, indexing, monitoring, and audit readiness.
   </Card>
+  <Card
+    title="Week 7: App Integration Layer"
+    icon="route"
+    href="/week-7/the-app-is-the-transaction-pipeline"
+  >
+    Transaction builders, wallet previews, indexer revalidation, and frontend read models around the Week 6 cell graph.
+  </Card>
 </CardGroup>
 
 ## Current focus
 
-The learning path now moves from the Week 1 mental-model reset into scripts, assets, infrastructure, production patterns, and full protocol design. It is still written from the perspective of a developer arriving with Solana and Ethereum assumptions, but the scope now reaches all the way to mainnet operations and application-level cell graphs.
+The learning path now moves from the Week 1 mental-model reset into scripts, assets, infrastructure, production patterns, full protocol design, and the app integration layer around that protocol. It is still written from the perspective of a developer arriving with Solana and Ethereum assumptions, but the scope now reaches all the way to mainnet operations, application-level cell graphs, and the transaction pipeline users actually touch.
 
 That means the content is intentionally opinionated:
 
@@ -77,5 +84,5 @@ That means the content is intentionally opinionated:
 If you are new to CKB but not new to blockchains, start here:
 
 1. Read the Week 1 bridge note.
-2. Work through the local exercises week by week from `week1/` through `week6/`.
+2. Work through the local exercises week by week from `week1/` through `week7/`.
 3. Use the docs pages as the conceptual spine and the local scripts as the concrete transaction walkthroughs.
